@@ -4,7 +4,7 @@ import './globals.css'
 import { CookieBanner } from '@/components/cookie-banner'
 
 export const metadata: Metadata = {
-  title: 'Northstar Social | Create meaningful posts',
+  title: 'नर्थस्टार सामाजिक | अर्थपूर्ण पोस्टहरू सिर्जना गर्नुहोस्',
   description: 'Create, refine, and publish social posts from one calm workspace.',
   generator: 'v0.app',
   icons: {
