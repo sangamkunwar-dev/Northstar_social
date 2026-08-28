@@ -139,7 +139,11 @@ function WelcomeScreen({ visible, onContinue }: { visible: boolean; onContinue: 
       <div className="mx-auto grid size-14 place-items-center rounded-2xl bg-primary text-primary-foreground"><Sparkles size={24} /></div>
       <p className="mt-6 text-sm font-bold uppercase tracking-[0.18em] text-primary">स्वागत छ</p>
       <h1 className="mt-3 text-3xl font-semibold">नर्थस्टार सिर्जनालयमा स्वागत छ</h1>
-      <p className="mt-4 text-sm leading-6 text-muted-foreground">Sangam Kunwar द्वारा निर्मित — तपाईंका विचारलाई प्रकाशित सामग्रीमा बदल्ने शान्त workspace.</p>
+      <p className="mt-4 text-sm leading-6 text-muted-foreground">Made by Sangam Kunwar — तपाईंका विचारलाई प्रकाशित सामग्रीमा बदल्ने शान्त workspace.</p>
+      <div className="mt-5 flex flex-col gap-2 text-sm">
+        <a href="mailto:info@sangamkunwar.com.np" className="font-semibold text-primary underline-offset-4 hover:underline">info@sangamkunwar.com.np</a>
+        <a href="https://wa.me/9779701024066" target="_blank" rel="noreferrer" className="font-semibold text-primary underline-offset-4 hover:underline">WhatsApp: +977 9701024066</a>
+      </div>
       <button onClick={onContinue} className="mt-7 w-full rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground">सुरु गर्नुहोस्</button>
     </div>
   </div>
