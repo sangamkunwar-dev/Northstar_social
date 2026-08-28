@@ -144,7 +144,7 @@ function WelcomeScreen({ visible, onContinue }: { visible: boolean; onContinue: 
         <a href="mailto:info@sangamkunwar.com.np" className="font-semibold text-primary underline-offset-4 hover:underline">info@sangamkunwar.com.np</a>
         <a href="https://wa.me/9779701024066" target="_blank" rel="noreferrer" className="font-semibold text-primary underline-offset-4 hover:underline">WhatsApp: +977 9701024066</a>
       </div>
-      <button onClick={onContinue} className="mt-7 w-full rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground">सुरु गर्नुहोस्</button>
+      <button type="button" onClick={(event) => { event.preventDefault(); onContinue() }} className="mt-7 w-full rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground">सुरु गर्नुहोस्</button>
     </div>
   </div>
 }
