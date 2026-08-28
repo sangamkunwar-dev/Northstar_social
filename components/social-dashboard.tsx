@@ -67,17 +67,23 @@ export function SocialDashboard() {
   }, [supabase, user])
 
   async function signIn() {
-    if (!supabase) { setNotice('Sign-in is unavailable in offline mode. You can still use the AI writing assistant.'); return }
-    await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/auth/callback` } })
+    if (!supabase) { setNotice('Google sign-in is unavailable in offline mode. You can still use the writing assistant.'); return }
+    const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/auth/callback` } })
+    if (error) setNotice('Google sign-in could not start. Please try again.')
   }
   async function generate() {
     if (!topic.trim()) { setNotice('Describe what you want to share first.'); return }
     setBusy(true); setNotice('')
-    const response = await fetch('/api/generate-caption', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ topic }) })
-    const result = await response.json()
-    if (!response.ok) setNotice(result.error || 'AI generation failed.')
-    else { setCaption(result.caption); setHashtags(result.hashtags); setCta(result.cta); setNotice(result.fallback ? 'Draft ready in offline mode. Connect AI Gateway for Gemini-powered writing.' : 'Gemini draft generated. Review it before saving.') }
-    setBusy(false)
+    try {
+      const response = await fetch('/api/generate-caption', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ topic }) })
+      const result = await response.json()
+      if (!response.ok) setNotice(result.error || 'AI generation failed.')
+      else { setCaption(result.caption || ''); setHashtags(result.hashtags || ''); setCta(result.cta || ''); setNotice(result.fallback ? 'Draft generated with the built-in writing assistant.' : 'Gemini draft generated. Review it before saving.') }
+    } catch {
+      setNotice('The writing assistant could not connect. Please try Generate again.')
+    } finally {
+      setBusy(false)
+    }
   }
   async function savePost() {
     if (!topic.trim() || !caption.trim() || !channels.length) { setNotice('Add a topic, caption, and at least one connected channel.'); return }
@@ -101,7 +107,7 @@ export function SocialDashboard() {
 }
 
 function Brand() { return <div className="flex items-center gap-3"><div className="grid size-9 place-items-center rounded-xl bg-primary text-primary-foreground"><Sparkles size={18}/></div><span className="text-lg font-semibold">Northstar Social</span></div> }
-function LegacyLanding({ onSignIn, notice }: { onSignIn: () => void; notice: string }) { return <main className="min-h-screen bg-background px-6 py-6 text-foreground"><header className="mx-auto flex max-w-6xl items-center justify-between"><Brand/><button onClick={onSignIn} className="text-sm font-bold text-muted-foreground">Sign in</button></header><section className="mx-auto max-w-6xl py-24"><p className="text-sm font-bold text-primary">A better way to show up online</p><h1 className="mt-4 max-w-3xl text-5xl font-semibold tracking-tight sm:text-7xl">Turn your ideas into posts people remember.</h1><p className="mt-7 max-w-xl text-lg leading-8 text-muted-foreground">Northstar Social helps you write, schedule, and understand your content with one focused workspace.</p><button onClick={onSignIn} className="mt-9 rounded-xl bg-primary px-5 py-4 text-sm font-bold text-primary-foreground"><span className="inline-grid size-5 place-items-center rounded-full bg-background text-xs font-black text-foreground">G</span> Continue with Google</button>{notice && <p className="mt-4 text-sm font-semibold text-primary">{notice}</p>}<p className="mt-20 text-xs text-muted-foreground">Made by Sangam Kunwar</p></section></main> }
+function LegacyLanding({ onSignIn, notice }: { onSignIn: () => void; notice: string }) { return <main className="min-h-screen bg-background px-6 py-6 text-foreground"><header className="mx-auto flex max-w-6xl items-center justify-between"><Brand/><button onClick={onSignIn} className="text-sm font-bold text-muted-foreground">Sign in</button></header><section className="mx-auto max-w-6xl py-24"><p className="text-sm font-bold text-primary">A better way to show up online</p><h1 className="mt-4 max-w-3xl text-5xl font-semibold tracking-tight sm:text-7xl">Turn your ideas into posts people remember.</h1><p className="mt-7 max-w-xl text-lg leading-8 text-muted-foreground">Northstar Social helps you write, schedule, and understand your content with one focused workspace.</p><button onClick={onSignIn} className="mt-9 inline-flex items-center gap-3 rounded-xl bg-primary px-5 py-4 text-sm font-bold text-primary-foreground"><img src="https://cdn.jsdelivr.net/gh/glincker/thesvg@main/public/icons/google/default.svg" alt="" aria-hidden="true" className="size-5 rounded-full bg-background p-0.5"/> Continue with Google</button>{notice && <p className="mt-4 text-sm font-semibold text-primary">{notice}</p>}<p className="mt-20 text-xs text-muted-foreground">Made by Sangam Kunwar</p></section></main> }
 function Landing({ onSignIn, notice }: { onSignIn: () => void; notice: string }) {
   const features = [
     { icon: PenLine, title: 'Write with clarity', text: 'Turn a rough idea into a polished caption, hook, and call to action.' },

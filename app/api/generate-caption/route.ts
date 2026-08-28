@@ -37,9 +37,11 @@ function parseCaption(text: string) {
 }
 
 export async function POST(request: Request) {
+  let topic = ''
+
   try {
     const body = await request.json()
-    const topic = typeof body.topic === 'string' ? body.topic.trim() : ''
+    topic = typeof body.topic === 'string' ? body.topic.trim() : ''
 
     if (!topic) return NextResponse.json({ error: 'Add a post topic first.' }, { status: 400 })
     if (topic.length > 2_000) return NextResponse.json({ error: 'Keep the topic under 2,000 characters.' }, { status: 400 })
