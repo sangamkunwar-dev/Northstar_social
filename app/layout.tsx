@@ -40,7 +40,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className="light bg-[#f7f8fa]">
+    <html lang="en" className="light bg-background">
       <body className="antialiased">
         {children}
         <CookieBanner />
