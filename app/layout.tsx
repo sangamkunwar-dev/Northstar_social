@@ -2,9 +2,12 @@ import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import { CookieBanner } from '@/components/cookie-banner'
+import { Noto_Sans_Devanagari } from 'next/font/google'
+
+const notoDevanagari = Noto_Sans_Devanagari({ subsets: ['devanagari'], variable: '--font-devanagari' })
 
 export const metadata: Metadata = {
-  title: 'नर्थस्टार सामाजिक | अर्थपूर्ण पोस्टहरू सिर्जना गर्नुहोस्',
+  title: 'नर्थस्टार सिर्जनालय | Northstar Social',
   description: 'Create, refine, and publish social posts from one calm workspace.',
   generator: 'v0.app',
   icons: {
@@ -40,8 +43,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className="light bg-background">
-      <body className="antialiased">
+    <html lang="ne" className="light bg-background">
+      <body className={`${notoDevanagari.variable} antialiased`}>
         {children}
         <CookieBanner />
         {process.env.NODE_ENV === 'production' && <Analytics />}
