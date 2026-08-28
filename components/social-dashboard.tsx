@@ -28,6 +28,21 @@ export function SocialDashboard() {
   const displayName = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'there'
 
   useEffect(() => {
+    // Facebook may append #_=_ after OAuth. Remove it without reloading the app.
+    if (window.location.hash === '#_=_') window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`)
+    const params = new URLSearchParams(window.location.search)
+    const reason = params.get('reason')
+    if (params.get('meta') === 'error') {
+      const messages: Record<string, string> = {
+        not_authenticated: 'Facebook was authorized, but your Northstar session was lost. Please sign in again.',
+        invalid_state: 'Facebook security verification failed. Please start the connection again.',
+        no_facebook_page: 'No Facebook Page was found on this account. Give the app Page access and retry.',
+        database_save_failed: 'Facebook was authorized, but Northstar could not save the connection.',
+      }
+      setNotice(messages[reason || ''] || `Facebook connection failed (${reason || 'unknown error'}).`)
+      window.history.replaceState(null, '', window.location.pathname)
+    }
+
     let mounted = true
     supabase.auth.getUser().then(({ data }: { data: { user: User | null } }) => mounted && setUser(data.user))
     const { data } = supabase.auth.onAuthStateChange((_event: AuthChangeEvent, session: Session | null) => setUser(session?.user ?? null))
