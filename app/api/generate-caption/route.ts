@@ -1,8 +1,9 @@
+import { google } from '@ai-sdk/google'
 import { gateway } from '@ai-sdk/gateway'
 import { generateText } from 'ai'
 import { NextResponse } from 'next/server'
 
-const MODEL = 'google/gemini-2.5-flash'
+const MODEL = 'gemini-2.5-flash'
 
 function parseCaption(text: string) {
   const lines = text
@@ -46,26 +47,30 @@ export async function POST(request: Request) {
     if (!topic) return NextResponse.json({ error: 'Add a post topic first.' }, { status: 400 })
     if (topic.length > 2_000) return NextResponse.json({ error: 'Keep the topic under 2,000 characters.' }, { status: 400 })
 
+    if (!process.env.GEMINI_API_KEY && !process.env.AI_GATEWAY_API_KEY) {
+      return NextResponse.json({ error: 'Gemini is not connected. Add GEMINI_API_KEY in Project Settings → Vars.' }, { status: 503 })
+    }
+    const model = process.env.GEMINI_API_KEY
+      ? google(MODEL)
+      : gateway(`google/${MODEL}`)
     const result = await generateText({
-      model: gateway(MODEL),
-      system: 'You write concise, warm social media captions. Return exactly three lines in this order: caption, hashtags, call to action. Do not use labels, markdown, or extra commentary.',
-      prompt: `Create a social post about: ${topic}`,
+      model,
+      system: 'You are Northstar Social’s expert content strategist. Generate a specific, polished social media post from the user’s idea. Return exactly three lines in this order: caption, hashtags, call to action. Do not use labels, markdown, generic filler, or mention that you are AI.',
+      prompt: `Write a thoughtful, informative social post about this idea. Match the clarity and specificity of a strong product description, not a vague motivational caption:\n\n${topic}`,
     })
 
-    return NextResponse.json(parseCaption(result.text))
+    const parsed = parseCaption(result.text)
+    if (!parsed.caption) throw new Error('Gemini returned an empty caption.')
+    return NextResponse.json(parsed)
   } catch (error) {
     const message = error instanceof Error ? error.message : ''
     console.error('[v0] Gemini caption generation failed:', error)
-    const billingError = /credit card|billing|free credits/i.test(message)
     const configurationError = /api.?key|authentication|unauthorized|credential|gateway|token|401|403/i.test(message)
-    const fallback = `A thoughtful take on ${topic} — made to start a conversation and bring your audience along.`
-    const hashtags = topic.split(/\s+/).filter(Boolean).slice(0, 3).map((word) => `#${word.replace(/[^a-z0-9]/gi, '')}`).join(' ') || '#northstarsocial'
     return NextResponse.json({
-      caption: fallback,
-      hashtags,
-      cta: 'What do you think? Share your perspective below.',
-      fallback: true,
-    })
+      error: configurationError
+        ? 'Gemini is not connected. Add GEMINI_API_KEY to your project environment variables, then try again.'
+        : 'Gemini could not generate this post. Please try again.',
+    }, { status: 502 })
   }
 }
 

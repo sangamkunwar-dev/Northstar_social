@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@ai-sdk/gateway": "4.0.67",
+    "@ai-sdk/google": "^4.0.56",
     "@base-ui/react": "^1.5.0",
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.112.4",
