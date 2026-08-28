@@ -38,6 +38,7 @@ export function SocialDashboard() {
         invalid_state: 'Facebook security verification failed. Please start the connection again.',
         no_facebook_page: 'No Facebook Page was found on this account. Give the app Page access and retry.',
         database_save_failed: 'Facebook was authorized, but Northstar could not save the connection.',
+        invalid_meta_app_secret: 'META_APP_SECRET does not match this Facebook App. Replace it with the current App Secret for App ID 1604738994727607.',
       }
       setNotice(messages[reason || ''] || `Facebook connection failed (${reason || 'unknown error'}).`)
       window.history.replaceState(null, '', window.location.pathname)

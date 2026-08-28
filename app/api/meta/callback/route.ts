@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
-const META_APP_ID = process.env.META_APP_ID || '1604738994727607'
-const META_APP_SECRET = process.env.META_APP_SECRET
+const META_APP_ID = process.env.META_APP_ID?.trim() || '1604738994727607'
+const META_APP_SECRET = process.env.META_APP_SECRET?.trim()
 function getRedirectUri(request: Request) {
   if (process.env.META_REDIRECT_URI) return process.env.META_REDIRECT_URI
   const url = new URL(request.url)
@@ -47,7 +47,10 @@ export async function GET(request: Request) {
       console.error('[v0] Meta OAuth callback failed:', failure)
     }
   }
-  if (failure) redirect.searchParams.set('reason', failure.slice(0, 80))
+  if (failure) {
+    const safeReason = failure.startsWith('meta_1: Error validating client secret.') ? 'invalid_meta_app_secret' : failure
+    redirect.searchParams.set('reason', safeReason.slice(0, 120))
+  }
   const response = NextResponse.redirect(redirect)
   response.cookies.delete('meta_oauth_state')
   return response
