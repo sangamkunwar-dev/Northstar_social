@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 
-const META_APP_ID = process.env.META_APP_ID || '1604738994727607'
+const META_APP_ID = process.env.META_APP_ID?.trim() || '1604738994727607'
 function getRedirectUri(request: Request) {
   if (process.env.META_REDIRECT_URI) return process.env.META_REDIRECT_URI
   const url = new URL(request.url)
