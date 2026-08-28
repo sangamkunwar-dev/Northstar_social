@@ -9,7 +9,10 @@ type Post = { id: string; title: string; description: string; caption: string; h
 type Channel = 'facebook' | 'instagram'
 
 export function SocialDashboard() {
-  const supabase = useMemo(() => createClient(), [])
+  const supabase = useMemo(() => {
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY) return null
+    return createClient()
+  }, [])
   const [user, setUser] = useState<User | null>(null)
   const [posts, setPosts] = useState<Post[]>([])
   const [connections, setConnections] = useState<Record<Channel, boolean>>({ facebook: false, instagram: false })
@@ -46,13 +49,14 @@ export function SocialDashboard() {
     }
 
     let mounted = true
+    if (!supabase) return () => { mounted = false }
     supabase.auth.getUser().then(({ data }: { data: { user: User | null } }) => mounted && setUser(data.user))
     const { data } = supabase.auth.onAuthStateChange((_event: AuthChangeEvent, session: Session | null) => setUser(session?.user ?? null))
     return () => { mounted = false; data.subscription.unsubscribe() }
   }, [supabase])
 
   useEffect(() => {
-    if (!user) return
+    if (!user || !supabase) return
     Promise.all([
       supabase.from('social_posts').select('id,title,description,caption,hashtags,call_to_action,platforms,status,scheduled_for,created_at').eq('user_id', user.id).order('created_at', { ascending: false }),
       supabase.from('social_connections').select('provider,connected').eq('user_id', user.id),
@@ -63,7 +67,7 @@ export function SocialDashboard() {
   }, [supabase, user])
 
   async function signIn() {
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) { setNotice('Add Supabase variables to enable Google sign-in.'); return }
+    if (!supabase) { setNotice('Sign-in is unavailable in offline mode. You can still use the AI writing assistant.'); return }
     await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/auth/callback` } })
   }
   async function generate() {
@@ -77,6 +81,7 @@ export function SocialDashboard() {
   }
   async function savePost() {
     if (!topic.trim() || !caption.trim() || !channels.length) { setNotice('Add a topic, caption, and at least one connected channel.'); return }
+    if (!user && !connections.facebook && !connections.instagram) { setNotice('Connect a channel to save or publish posts.'); return }
     if (!channels.every((channel) => connections[channel])) { setNotice('Connect each selected channel before posting.'); return }
     setBusy(true); setNotice('')
     const status = schedule ? 'scheduled' : 'published'
