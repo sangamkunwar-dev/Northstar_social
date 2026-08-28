@@ -16,7 +16,10 @@ export async function GET(request: Request) {
   const redirectUri = getRedirectUri(request)
   if (channel !== 'facebook' && channel !== 'instagram') return NextResponse.json({ error: 'Invalid channel' }, { status: 400 })
   const state = crypto.randomUUID()
-  const response = NextResponse.redirect(`https://www.facebook.com/v23.0/dialog/oauth?client_id=${encodeURIComponent(META_APP_ID)}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${encodeURIComponent(state)}&scope=${encodeURIComponent('pages_show_list,pages_read_engagement,pages_manage_posts,instagram_basic,instagram_content_publish')}`)
+  const scopes = channel === 'facebook'
+    ? 'pages_show_list,pages_read_engagement,pages_manage_posts'
+    : 'instagram_basic,instagram_content_publish,pages_show_list'
+  const response = NextResponse.redirect(`https://www.facebook.com/v23.0/dialog/oauth?client_id=${encodeURIComponent(META_APP_ID)}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${encodeURIComponent(state)}&scope=${encodeURIComponent(scopes)}`)
   response.cookies.set('meta_oauth_state', `${state}:${channel}`, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', maxAge: 600, path: '/' })
   return response
 }
