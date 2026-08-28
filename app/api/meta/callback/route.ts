@@ -31,12 +31,14 @@ export async function GET(request: Request) {
       const tokenResponse = await fetch(`https://graph.facebook.com/v23.0/oauth/access_token?client_id=${encodeURIComponent(META_APP_ID)}&client_secret=${encodeURIComponent(META_APP_SECRET!)}&redirect_uri=${encodeURIComponent(redirectUri)}&code=${encodeURIComponent(code!)}`)
       const token = await tokenResponse.json()
       if (!tokenResponse.ok || !token.access_token) throw new Error(token.error?.message ? `meta_${token.error.code || 'oauth'}: ${token.error.message}` : 'token_exchange_failed')
-      const pagesResponse = await fetch(`https://graph.facebook.com/v23.0/me/accounts?fields=id,name,access_token,instagram_business_account&access_token=${encodeURIComponent(token.access_token)}`)
+      const pagesResponse = await fetch(`https://graph.facebook.com/v23.0/me/accounts?fields=id,name,access_token,instagram_business_account{id,username,name,profile_picture_url}&limit=100&access_token=${encodeURIComponent(token.access_token)}`)
       const pages = await pagesResponse.json()
       if (!pagesResponse.ok) throw new Error(pages.error?.message ? `meta_${pages.error.code || 'pages'}: ${pages.error.message}` : 'pages_request_failed')
-      const page = pages.data?.[0]
+      const pagesWithInstagram = pages.data?.filter((candidate: any) => candidate.instagram_business_account) ?? []
+      const page = channel === 'instagram' ? pagesWithInstagram[0] || pages.data?.[0] : pages.data?.[0]
       if (!page) throw new Error('no_facebook_page')
-      const rows = [{ user_id: user!.id, provider: 'facebook', account_name: page.name, account_handle: page.id, connected: true }, ...(page.instagram_business_account ? [{ user_id: user!.id, provider: 'instagram', account_name: page.name, account_handle: page.instagram_business_account.id, connected: true }] : [])]
+      if (channel === 'instagram' && !page.instagram_business_account) throw new Error('no_instagram_business_account')
+      const rows = [{ user_id: user!.id, provider: 'facebook', account_name: page.name, account_handle: page.id, connected: true }, ...(page.instagram_business_account ? [{ user_id: user!.id, provider: 'instagram', account_name: page.instagram_business_account.username || page.instagram_business_account.name || page.name, account_handle: page.instagram_business_account.id, connected: true }] : [])]
       const { error } = await supabase.from('social_connections').upsert(rows, { onConflict: 'user_id,provider' })
       if (error) throw new Error('database_save_failed')
       redirect.searchParams.set('meta', 'connected')

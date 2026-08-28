@@ -37,6 +37,7 @@ export function SocialDashboard() {
         not_authenticated: 'Facebook was authorized, but your Northstar session was lost. Please sign in again.',
         invalid_state: 'Facebook security verification failed. Please start the connection again.',
         no_facebook_page: 'No Facebook Page was found on this account. Give the app Page access and retry.',
+        no_instagram_business_account: 'Instagram requires a professional Instagram account linked to a Facebook Page. Link them in Meta Accounts Center, then retry.',
         database_save_failed: 'Facebook was authorized, but Northstar could not save the connection.',
         invalid_meta_app_secret: 'META_APP_SECRET does not match this Facebook App. Replace it with the current App Secret for App ID 1604738994727607.',
       }
