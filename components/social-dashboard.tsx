@@ -28,6 +28,9 @@ export function SocialDashboard() {
   const displayName = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'there'
 
   useEffect(() => {
+    // Facebook may append #_=_ after OAuth. Remove it without reloading the app.
+    if (window.location.hash === '#_=_') window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`)
+
     let mounted = true
     supabase.auth.getUser().then(({ data }: { data: { user: User | null } }) => mounted && setUser(data.user))
     const { data } = supabase.auth.onAuthStateChange((_event: AuthChangeEvent, session: Session | null) => setUser(session?.user ?? null))

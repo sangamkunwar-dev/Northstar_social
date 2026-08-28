@@ -3,10 +3,18 @@ import { createClient } from '@/lib/supabase/server'
 
 const META_APP_ID = process.env.META_APP_ID || '1604738994727607'
 const META_APP_SECRET = process.env.META_APP_SECRET
-const META_REDIRECT_URI = process.env.META_REDIRECT_URI || `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/meta/callback`
+function getRedirectUri(request: Request) {
+  if (process.env.META_REDIRECT_URI) return process.env.META_REDIRECT_URI
+  const url = new URL(request.url)
+  const forwardedHost = request.headers.get('x-forwarded-host')
+  const forwardedProto = request.headers.get('x-forwarded-proto') || url.protocol.replace(':', '')
+  const origin = forwardedHost ? `${forwardedProto}://${forwardedHost.split(',')[0].trim()}` : url.origin
+  return `${origin}/api/meta/callback`
+}
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url)
+  const redirectUri = getRedirectUri(request)
   const code = requestUrl.searchParams.get('code')
   const returnedState = requestUrl.searchParams.get('state')
   const oauthCookie = request.headers.get('cookie')?.match(/(?:^|; )meta_oauth_state=([^;]*)/)?.[1]
@@ -19,7 +27,7 @@ export async function GET(request: Request) {
   if (!user || !code || !returnedState || returnedState !== savedState || !channel || !META_APP_SECRET) return NextResponse.redirect(redirect)
 
   try {
-    const tokenResponse = await fetch(`https://graph.facebook.com/v23.0/oauth/access_token?client_id=${encodeURIComponent(META_APP_ID)}&client_secret=${encodeURIComponent(META_APP_SECRET)}&redirect_uri=${encodeURIComponent(META_REDIRECT_URI)}&code=${encodeURIComponent(code)}`)
+    const tokenResponse = await fetch(`https://graph.facebook.com/v23.0/oauth/access_token?client_id=${encodeURIComponent(META_APP_ID)}&client_secret=${encodeURIComponent(META_APP_SECRET)}&redirect_uri=${encodeURIComponent(redirectUri)}&code=${encodeURIComponent(code)}`)
     const token = await tokenResponse.json()
     if (!token.access_token) throw new Error('Token exchange failed')
     const pagesResponse = await fetch(`https://graph.facebook.com/v23.0/me/accounts?fields=id,name,access_token,instagram_business_account&access_token=${encodeURIComponent(token.access_token)}`)
