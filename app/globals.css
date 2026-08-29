@@ -174,6 +174,19 @@
   50% { box-shadow: 0 0 0 12px transparent; }
 }
 
+@keyframes northstar-showcase {
+  0%, 100% { transform: scale(1); filter: saturate(0.94); }
+  50% { transform: scale(1.045); filter: saturate(1.08); }
+}
+
+.northstar-showcase-image {
+  animation: northstar-showcase 9s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .northstar-showcase-image { animation: none; }
+}
+
 @layer components {
   .field {
     @apply w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none transition placeholder:text-muted-foreground focus:border-primary focus:ring-4 focus:ring-primary/10;
