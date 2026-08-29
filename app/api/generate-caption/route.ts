@@ -1,8 +1,13 @@
-import { gateway } from '@ai-sdk/gateway'
+import { createGoogleGenerativeAI } from '@ai-sdk/google'
 import { generateText } from 'ai'
 import { NextResponse } from 'next/server'
 
-const MODEL = 'google/gemini-2.5-flash'
+// Initialize Google provider using your direct API key
+const google = createGoogleGenerativeAI({
+  apiKey: process.env.GEMINI_API_KEY,
+})
+
+const MODEL = 'gemini-2.5-flash' // Using official Google model string
 
 function parseCaption(text: string) {
   const lines = text
@@ -47,7 +52,7 @@ export async function POST(request: Request) {
     if (topic.length > 2_000) return NextResponse.json({ error: 'Keep the topic under 2,000 characters.' }, { status: 400 })
 
     const result = await generateText({
-      model: gateway(MODEL),
+      model: google(MODEL),
       system: 'You are Northstar Social’s expert social media copywriter. Write original content about the user’s exact topic. Never append boilerplate such as “shaped into a clear, thoughtful story for your audience.” Return exactly three lines: the complete caption, relevant hashtags, and a specific call to action. Do not use labels, markdown, generic filler, or mention that you are AI.',
       prompt: `Create a natural, culturally respectful social media post specifically about this topic. Preserve the topic’s meaning and add useful details, context, or emotion instead of describing the writing process. The first line must be the finished caption, not a summary of the request.\n\nTopic: ${topic}`,
     })
@@ -56,7 +61,7 @@ export async function POST(request: Request) {
     if (!parsed.caption) throw new Error('Gemini returned an empty caption.')
     return NextResponse.json({ ...parsed, fallback: false })
   } catch (error) {
-    console.error('[v0] Gemini caption generation failed:', error)
+    console.error('[Northstar Social] Gemini caption generation failed:', error)
     const cleanTopic = topic.replace(/\s+/g, ' ').trim()
     return NextResponse.json({
       caption: `Sharing a thoughtful update about ${cleanTopic}. Here is what matters most, and why it is worth bringing to our community.`,
@@ -66,6 +71,5 @@ export async function POST(request: Request) {
     })
   }
 }
-
 
 export const runtime = 'edge'
