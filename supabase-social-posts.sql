@@ -78,6 +78,15 @@ create policy "support_tickets_own" on public.support_tickets for all to authent
 create policy "support_tickets_admin" on public.support_tickets for all to authenticated using ((select auth.jwt() ->> 'email') = 'sangamkunwar48@gmail.com') with check ((select auth.jwt() ->> 'email') = 'sangamkunwar48@gmail.com');
 grant select, insert, update on public.support_tickets to authenticated;
 
+-- If support_tickets already existed before this script, run this migration too.
+alter table public.support_tickets add column if not exists type text not null default 'Support';
+alter table public.support_tickets add column if not exists message text not null default '';
+alter table public.support_tickets add column if not exists status text not null default 'pending';
+alter table public.support_tickets add column if not exists created_at timestamptz not null default now();
+update public.support_tickets set status = 'pending' where status is null or status = 'open';
+alter table public.support_tickets drop constraint if exists support_tickets_status_check;
+alter table public.support_tickets add constraint support_tickets_status_check check (status in ('pending','in_progress','resolved','closed'));
+
 -- Optional: verify the table definition after running this script.
 select column_name, is_nullable, column_default, is_identity
 from information_schema.columns
