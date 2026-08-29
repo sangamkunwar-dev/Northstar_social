@@ -60,6 +60,20 @@ create policy "social_connections_own" on public.social_connections for all to a
   using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id);
 grant select, insert, update, delete on public.social_connections to authenticated;
 
+create table if not exists public.support_tickets (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  type text not null default 'Support' check (type in ('Support','Complaint','Feature request','Other')),
+  subject text not null,
+  message text not null,
+  status text not null default 'open' check (status in ('open','in_progress','resolved','closed')),
+  created_at timestamptz not null default now()
+);
+alter table public.support_tickets enable row level security;
+drop policy if exists "support_tickets_own" on public.support_tickets;
+create policy "support_tickets_own" on public.support_tickets for all to authenticated using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id);
+grant select, insert on public.support_tickets to authenticated;
+
 -- Optional: verify the table definition after running this script.
 select column_name, is_nullable, column_default, is_identity
 from information_schema.columns

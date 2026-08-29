@@ -56,14 +56,12 @@ export async function POST(request: Request) {
 
     const parsed = parseCaption(result.text)
     if (!parsed.caption) throw new Error('Gemini returned an empty caption.')
-    return NextResponse.json(parsed)
+    return NextResponse.json({ ...parsed, fallback: false })
   } catch (error) {
-    const message = error instanceof Error ? error.message : ''
-    console.error('[v0] Gemini caption generation failed:', error)
-    return NextResponse.json({
-      error: 'AI generation is temporarily unavailable. Please try again.',
-    }, { status: 502 })
+    const words = topic.split(/\s+/).filter(Boolean).slice(0, 5).map((word) => `#${word.replace(/[^a-z0-9]/gi, '')}`).join(' ') || '#northstarsocial'
+    return NextResponse.json({ caption: `${topic.charAt(0).toUpperCase()}${topic.slice(1)} — shaped into a clear, thoughtful story for your audience.`, hashtags: words, cta: 'What would you add? Share your perspective below.', fallback: true })
   }
 }
+
 
 export const runtime = 'edge'
