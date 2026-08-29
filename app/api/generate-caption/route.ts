@@ -2,7 +2,7 @@ import { gateway } from '@ai-sdk/gateway'
 import { generateText } from 'ai'
 import { NextResponse } from 'next/server'
 
-const MODEL = 'gemini-2.5-flash'
+const MODEL = 'google/gemini-2.5-flash'
 
 function parseCaption(text: string) {
   const lines = text
@@ -46,20 +46,18 @@ export async function POST(request: Request) {
     if (!topic) return NextResponse.json({ error: 'Add a post topic first.' }, { status: 400 })
     if (topic.length > 2_000) return NextResponse.json({ error: 'Keep the topic under 2,000 characters.' }, { status: 400 })
 
-    // Use the Vercel AI Gateway for Gemini. It handles preview authentication securely.
-    const model = gateway('google/gemini-2.5-flash')
     const result = await generateText({
-      model,
-      system: 'You are Northstar Social’s expert content strategist. Generate a specific, polished social media post from the user’s idea. Return exactly three lines in this order: caption, hashtags, call to action. Do not use labels, markdown, generic filler, or mention that you are AI.',
-      prompt: `Write a thoughtful, informative social post about this idea. Match the clarity and specificity of a strong product description, not a vague motivational caption:\n\n${topic}`,
+      model: gateway(MODEL),
+      system: 'You are Northstar Social’s expert social media copywriter. Write original content about the user’s exact topic. Never append boilerplate such as “shaped into a clear, thoughtful story for your audience.” Return exactly three lines: the complete caption, relevant hashtags, and a specific call to action. Do not use labels, markdown, generic filler, or mention that you are AI.',
+      prompt: `Create a natural, culturally respectful social media post specifically about this topic. Preserve the topic’s meaning and add useful details, context, or emotion instead of describing the writing process. The first line must be the finished caption, not a summary of the request.\n\nTopic: ${topic}`,
     })
 
     const parsed = parseCaption(result.text)
     if (!parsed.caption) throw new Error('Gemini returned an empty caption.')
     return NextResponse.json({ ...parsed, fallback: false })
   } catch (error) {
-    const words = topic.split(/\s+/).filter(Boolean).slice(0, 5).map((word) => `#${word.replace(/[^a-z0-9]/gi, '')}`).join(' ') || '#northstarsocial'
-    return NextResponse.json({ caption: `${topic.charAt(0).toUpperCase()}${topic.slice(1)} — shaped into a clear, thoughtful story for your audience.`, hashtags: words, cta: 'What would you add? Share your perspective below.', fallback: true })
+    console.error('[v0] Gemini caption generation failed:', error)
+    return NextResponse.json({ error: 'Gemini could not generate this caption. Please try again.' }, { status: 502 })
   }
 }
 
