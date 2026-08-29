@@ -38,7 +38,7 @@ export async function GET(request: Request) {
       const page = channel === 'instagram' ? pagesWithInstagram[0] || pages.data?.[0] : pages.data?.[0]
       if (!page) throw new Error('no_facebook_page')
       if (channel === 'instagram' && !page.instagram_business_account) throw new Error('no_instagram_business_account')
-      const rows = [{ user_id: user!.id, provider: 'facebook', account_name: page.name, account_handle: page.id, connected: true }, ...(page.instagram_business_account ? [{ user_id: user!.id, provider: 'instagram', account_name: page.instagram_business_account.username || page.instagram_business_account.name || page.name, account_handle: page.instagram_business_account.id, connected: true }] : [])]
+      const rows = [{ user_id: user!.id, provider: 'facebook', account_name: page.name, account_handle: page.id, access_token: page.access_token || token.access_token, connected: true }, ...(page.instagram_business_account ? [{ user_id: user!.id, provider: 'instagram', account_name: page.instagram_business_account.username || page.instagram_business_account.name || page.name, account_handle: page.instagram_business_account.id, access_token: page.access_token || token.access_token, connected: true }] : [])]
       const { error } = await supabase.from('social_connections').upsert(rows, { onConflict: 'user_id,provider' })
       if (error) throw new Error('database_save_failed')
       redirect.searchParams.set('meta', 'connected')

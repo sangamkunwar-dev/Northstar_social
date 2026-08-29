@@ -111,7 +111,12 @@ export function SocialDashboard() {
     setBusy(true); setNotice('')
     const status = schedule ? 'scheduled' : 'published'
     const scheduledFor = nepalInputToIso(schedule)
-const payload = { user_id: user?.id, title: topic.trim(), description: topic.trim(), caption: caption.trim(), hashtags, call_to_action: cta, platforms: channels, status, scheduled_for: scheduledFor, published_at: status === 'published' ? new Date().toISOString() : null }
+    if (status === 'published') {
+      const publishResponse = await fetch('/api/meta/publish', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ caption: `${caption.trim()}${hashtags ? `\n\n${hashtags}` : ''}${cta ? `\n\n${cta}` : ''}`, channels, imageUrl }) })
+      const publishResult = await publishResponse.json()
+      if (!publishResponse.ok) { setNotice(publishResult.error || 'Publishing failed. Nothing was saved as published.'); setBusy(false); return }
+    }
+    const payload = { user_id: user?.id, title: topic.trim(), description: topic.trim(), caption: caption.trim(), hashtags, call_to_action: cta, platforms: channels, status, scheduled_for: scheduledFor, published_at: status === 'published' ? new Date().toISOString() : null }
     const { data, error } = user ? await supabase.from('social_posts').insert(payload).select('id,created_at').single() : { data: { id: crypto.randomUUID(), created_at: new Date().toISOString() }, error: null }
     if (error) {
       console.error('[v0] Supabase social_posts insert failed:', error)

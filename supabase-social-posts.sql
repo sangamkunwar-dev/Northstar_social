@@ -40,6 +40,26 @@ grant select, insert, update, delete on public.social_posts to authenticated;
 create index if not exists social_posts_user_created_idx
   on public.social_posts (user_id, created_at desc);
 
+-- Required for Facebook/Instagram publishing.
+create table if not exists public.social_connections (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  provider text not null check (provider in ('facebook', 'instagram')),
+  account_name text not null default '',
+  account_handle text not null,
+  access_token text not null,
+  connected boolean not null default true,
+  created_at timestamptz not null default now(),
+  unique (user_id, provider)
+);
+
+alter table public.social_connections add column if not exists access_token text;
+alter table public.social_connections enable row level security;
+drop policy if exists "social_connections_own" on public.social_connections;
+create policy "social_connections_own" on public.social_connections for all to authenticated
+  using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id);
+grant select, insert, update, delete on public.social_connections to authenticated;
+
 -- Optional: verify the table definition after running this script.
 select column_name, is_nullable, column_default, is_identity
 from information_schema.columns
