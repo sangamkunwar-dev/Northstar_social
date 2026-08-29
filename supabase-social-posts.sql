@@ -79,12 +79,13 @@ create policy "support_tickets_admin" on public.support_tickets for all to authe
 grant select, insert, update on public.support_tickets to authenticated;
 
 -- If support_tickets already existed before this script, run this migration too.
+-- Drop the old constraint first; it may reject the new pending default.
+alter table public.support_tickets drop constraint if exists support_tickets_status_check;
 alter table public.support_tickets add column if not exists type text not null default 'Support';
 alter table public.support_tickets add column if not exists message text not null default '';
 alter table public.support_tickets add column if not exists status text not null default 'pending';
 alter table public.support_tickets add column if not exists created_at timestamptz not null default now();
 update public.support_tickets set status = 'pending' where status is null or status = 'open';
-alter table public.support_tickets drop constraint if exists support_tickets_status_check;
 alter table public.support_tickets add constraint support_tickets_status_check check (status in ('pending','in_progress','resolved','closed'));
 
 -- Optional: verify the table definition after running this script.
