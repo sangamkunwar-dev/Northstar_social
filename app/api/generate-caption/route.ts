@@ -1,5 +1,4 @@
 import { google } from '@ai-sdk/google'
-import { gateway } from '@ai-sdk/gateway'
 import { generateText } from 'ai'
 import { NextResponse } from 'next/server'
 
@@ -48,10 +47,10 @@ export async function POST(request: Request) {
     if (topic.length > 2_000) return NextResponse.json({ error: 'Keep the topic under 2,000 characters.' }, { status: 400 })
 
     const geminiApiKey = process.env.GEMINI_API_KEY || process.env.Gemini_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY
-    // Vercel AI Gateway is available in preview/deployments without a user-supplied key.
-    const model = geminiApiKey
-      ? google(MODEL, { apiKey: geminiApiKey })
-      : gateway('google/gemini-2.5-flash')
+    if (!geminiApiKey) {
+      return NextResponse.json({ error: 'Gemini key is missing at runtime. Add the key value to GEMINI_API_KEY in Project Settings → Vars, then restart the preview.' }, { status: 503 })
+    }
+    const model = google(MODEL, { apiKey: geminiApiKey })
     const result = await generateText({
       model,
       system: 'You are Northstar Social’s expert content strategist. Generate a specific, polished social media post from the user’s idea. Return exactly three lines in this order: caption, hashtags, call to action. Do not use labels, markdown, generic filler, or mention that you are AI.',
