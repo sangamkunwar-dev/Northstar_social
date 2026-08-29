@@ -57,7 +57,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ ...parsed, fallback: false })
   } catch (error) {
     console.error('[v0] Gemini caption generation failed:', error)
-    return NextResponse.json({ error: 'Gemini could not generate this caption. Please try again.' }, { status: 502 })
+    const cleanTopic = topic.replace(/\s+/g, ' ').trim()
+    return NextResponse.json({
+      caption: `Sharing a thoughtful update about ${cleanTopic}. Here is what matters most, and why it is worth bringing to our community.`,
+      hashtags: '#NorthstarSocial #Community #MeaningfulContent',
+      cta: 'What do you think? Share your perspective below.',
+      fallback: true,
+    })
   }
 }
 

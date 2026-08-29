@@ -66,13 +66,17 @@ create table if not exists public.support_tickets (
   type text not null default 'Support' check (type in ('Support','Complaint','Feature request','Other')),
   subject text not null,
   message text not null,
-  status text not null default 'open' check (status in ('open','in_progress','resolved','closed')),
+  status text not null default 'pending' check (status in ('pending','in_progress','resolved','closed')),
   created_at timestamptz not null default now()
 );
 alter table public.support_tickets enable row level security;
+alter table public.support_tickets drop constraint if exists support_tickets_status_check;
+alter table public.support_tickets add constraint support_tickets_status_check check (status in ('pending','in_progress','resolved','closed'));
 drop policy if exists "support_tickets_own" on public.support_tickets;
+drop policy if exists "support_tickets_admin" on public.support_tickets;
 create policy "support_tickets_own" on public.support_tickets for all to authenticated using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id);
-grant select, insert on public.support_tickets to authenticated;
+create policy "support_tickets_admin" on public.support_tickets for all to authenticated using ((select auth.jwt() ->> 'email') = 'sangamkunwar48@gmail.com') with check ((select auth.jwt() ->> 'email') = 'sangamkunwar48@gmail.com');
+grant select, insert, update on public.support_tickets to authenticated;
 
 -- Optional: verify the table definition after running this script.
 select column_name, is_nullable, column_default, is_identity
