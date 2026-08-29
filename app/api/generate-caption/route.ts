@@ -47,11 +47,12 @@ export async function POST(request: Request) {
     if (!topic) return NextResponse.json({ error: 'Add a post topic first.' }, { status: 400 })
     if (topic.length > 2_000) return NextResponse.json({ error: 'Keep the topic under 2,000 characters.' }, { status: 400 })
 
-    if (!process.env.GEMINI_API_KEY && !process.env.AI_GATEWAY_API_KEY) {
-      return NextResponse.json({ error: 'Gemini is not connected. Add GEMINI_API_KEY in Project Settings → Vars.' }, { status: 503 })
+    const geminiApiKey = process.env.GEMINI_API_KEY || process.env.Gemini_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY
+    if (!geminiApiKey && !process.env.AI_GATEWAY_API_KEY) {
+      return NextResponse.json({ error: 'Gemini is not connected. Add GEMINI_API_KEY (uppercase) in Project Settings → Vars, then restart the preview.' }, { status: 503 })
     }
-    const model = process.env.GEMINI_API_KEY
-      ? google(MODEL)
+    const model = geminiApiKey
+      ? google(MODEL, { apiKey: geminiApiKey })
       : gateway(`google/${MODEL}`)
     const result = await generateText({
       model,

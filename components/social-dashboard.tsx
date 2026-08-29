@@ -26,7 +26,7 @@ function nepalInputToIso(value: string) {
 }
 
 export function SocialDashboard() {
-  const [showWelcome, setShowWelcome] = useState(() => { if (typeof window === 'undefined') return true; return window.localStorage.getItem('northstar-welcome-seen') !== 'true' })
+  const [showWelcome, setShowWelcome] = useState(true)
   const supabase = useMemo(() => {
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY) return null
     return createClient()
@@ -49,6 +49,7 @@ export function SocialDashboard() {
   const displayName = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'there'
 
   useEffect(() => {
+    if (window.localStorage.getItem('northstar-welcome-seen') === 'true') setShowWelcome(false)
     // Facebook may append #_=_ after OAuth. Remove it without reloading the app.
     if (window.location.hash === '#_=_') window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`)
     const params = new URLSearchParams(window.location.search)
